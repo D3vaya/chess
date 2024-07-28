@@ -1,5 +1,5 @@
 defmodule Chess.Board do
-  alias Chess.Pieces.{Tower}
+  alias Chess.Pieces.{Tower, Horse, Pawn, Queen, King, Bishop}
 
   defstruct cells: %{},
             pieces: [],
@@ -50,23 +50,76 @@ defmodule Chess.Board do
   end
 
   @spec place_pieces(t()) :: t()
-  defp place_pieces(board) do
+  def place_pieces(board) do
     board
     |> place_towers()
-
-    # |> place_hourses()
-    # |> place_bishops()
-    # |> place_queens()
-    # |> place_kings()
-    # |> place_pawns()
+    |> place_hourses()
+    |> place_bishops()
+    |> place_queens()
+    |> place_kings()
+    |> place_pawns()
   end
 
+  @spec place_towers(t()) :: t()
   defp place_towers(board) do
     board
     |> put_piece({0, 0}, Tower.new(:black))
-    |> put_piece({0, 7}, Tower.new(:white))
-    |> put_piece({7, 0}, Tower.new(:black))
+    |> put_piece({0, 7}, Tower.new(:black))
+    |> put_piece({7, 0}, Tower.new(:white))
     |> put_piece({7, 7}, Tower.new(:white))
+  end
+
+  @spec place_hourses(t()) :: t()
+  defp place_hourses(board) do
+    board
+    |> put_piece({0, 1}, Horse.new(:black))
+    |> put_piece({0, 6}, Horse.new(:black))
+    |> put_piece({7, 1}, Horse.new(:white))
+    |> put_piece({7, 6}, Horse.new(:white))
+  end
+
+  @spec place_bishops(t()) :: t()
+  defp place_bishops(board) do
+    board
+    |> put_piece({0, 2}, Bishop.new(:black))
+    |> put_piece({0, 5}, Bishop.new(:black))
+    |> put_piece({7, 2}, Bishop.new(:white))
+    |> put_piece({7, 5}, Bishop.new(:white))
+  end
+
+  @spec place_queens(t()) :: t()
+  defp place_queens(board) do
+    board
+    |> put_piece({0, 3}, Queen.new(:black))
+    |> put_piece({7, 3}, Queen.new(:white))
+  end
+
+  @spec place_kings(t()) :: t()
+  defp place_kings(board) do
+    board
+    |> put_piece({0, 4}, King.new(:black))
+    |> put_piece({7, 4}, King.new(:white))
+  end
+
+  @spec place_pawns(t()) :: t()
+  defp place_pawns(board) do
+    board
+    |> put_piece({1, 0}, Pawn.new(:black))
+    |> put_piece({1, 1}, Pawn.new(:black))
+    |> put_piece({1, 2}, Pawn.new(:black))
+    |> put_piece({1, 3}, Pawn.new(:black))
+    |> put_piece({1, 4}, Pawn.new(:black))
+    |> put_piece({1, 5}, Pawn.new(:black))
+    |> put_piece({1, 6}, Pawn.new(:black))
+    |> put_piece({1, 7}, Pawn.new(:black))
+    |> put_piece({6, 0}, Pawn.new(:white))
+    |> put_piece({6, 1}, Pawn.new(:white))
+    |> put_piece({6, 2}, Pawn.new(:white))
+    |> put_piece({6, 3}, Pawn.new(:white))
+    |> put_piece({6, 4}, Pawn.new(:white))
+    |> put_piece({6, 5}, Pawn.new(:white))
+    |> put_piece({6, 6}, Pawn.new(:white))
+    |> put_piece({6, 7}, Pawn.new(:white))
   end
 
   defp put_piece(board, {row, col}, piece) do
@@ -81,19 +134,4 @@ defmodule Chess.Board do
 
     %{board | cells: updated_cells, pieces: [updated_piece | board.pieces]}
   end
-
-  # defp place_hourses(board) do
-  # end
-
-  # defp place_bishops(board) do
-  # end
-
-  # defp place_queens(board) do
-  # end
-
-  # defp place_kings(board) do
-  # end
-
-  # defp place_pawns(board) do
-  # end
 end

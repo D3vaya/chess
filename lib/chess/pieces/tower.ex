@@ -2,30 +2,30 @@ defmodule Chess.Pieces.Tower do
   @moduledoc """
   Represents a Tower on the board.
   """
-  @type name :: String.t()
+  @type shape :: String.t()
   @type color :: :white | :black
   @type location :: {integer, integer} | nil
   @type t :: %__MODULE__{
-          name: name(),
+          shape: shape(),
           color: color(),
           location: location()
         }
 
   @enforce_keys [:color]
-  defstruct color: nil, location: nil, name: ""
+  defstruct color: nil, location: nil, shape: ""
 
   @valid_colors [:white, :black]
 
   @spec new(color()) :: t()
   def new(color) when color in @valid_colors do
-    %__MODULE__{color: color, name: shape(color)}
+    %__MODULE__{color: color, shape: shape_by_color(color)}
   end
 
-  def shape(:white) do
+  def shape_by_color(:white) do
     "♖"
   end
 
-  def shape(:black) do
+  def shape_by_color(:black) do
     "♜"
   end
 

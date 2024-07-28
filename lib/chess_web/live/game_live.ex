@@ -33,9 +33,9 @@ defmodule ChessWeb.GameLive do
   defp render_cells(assigns) do
     ~H"""
     <%= for {x, y, piece} <- @board.cells do %>
-      <% piece_name = if is_nil(piece), do: "", else: piece.name %>
+      <% piece_name = if is_nil(piece), do: "", else: piece.shape %>
       <div
-        class={"w-10 h-10 flex items-center justify-center cursor-pointer #{if rem(x + y, 2) == 0, do: "bg-white text-black", else: "bg-black text-white"} hover:opacity-75 transition-opacity"}
+        class={"w-10 h-10 flex items-center justify-center cursor-pointer #{if rem(x + y, 2) == 0, do: "bg-white text-black", else: "bg-black text-white"} hover:bg-lime-300 transition-opacity"}
         phx-click="select_cell"
         phx-value-x={x}
         phx-value-y={y}

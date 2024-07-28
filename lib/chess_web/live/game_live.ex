@@ -2,7 +2,7 @@ defmodule ChessWeb.GameLive do
   use ChessWeb, :live_view
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, board: Chess.Board.new())}
+    {:ok, assign(socket, board: Chess.Board.new(), selected_cell: nil)}
   end
 
   def render(assigns) do
@@ -24,27 +24,24 @@ defmodule ChessWeb.GameLive do
 
   defp render_board(assigns) do
     ~H"""
-    <svg width="320" height="320" xmlns="http://www.w3.org/2000/svg" stroke="black" stroke-width="2">
-      <rect width="320" height="320" style="fill:rgb(0,0,0);" />
+    <div class="w-80 h-80 grid grid-cols-8 border border-gray-800">
       <%= render_cells(assigns) %>
-    </svg>
+    </div>
     """
   end
 
   defp render_cells(assigns) do
     ~H"""
-    <%= for {x, y} <- @board.cells do %>
-      <rect
-        width="40"
-        height="40"
-        x={x * 40}
-        y={y * 40}
-        class="chess-cell"
-        style={"fill: #{if rem(x + y, 2) == 0, do: "white", else: "black"};"}
+    <%= for {x, y, piece} <- @board.cells do %>
+      <% piece_name = if is_nil(piece), do: "", else: piece.name %>
+      <div
+        class={"w-10 h-10 flex items-center justify-center cursor-pointer #{if rem(x + y, 2) == 0, do: "bg-white text-black", else: "bg-black text-white"} hover:opacity-75 transition-opacity"}
         phx-click="select_cell"
         phx-value-x={x}
         phx-value-y={y}
-      />
+      >
+        <span class="text-2xl font-bold"><%= piece_name %></span>
+      </div>
     <% end %>
     """
   end
@@ -52,7 +49,10 @@ defmodule ChessWeb.GameLive do
   def handle_event("select_cell", %{"x" => x, "y" => y}, socket) do
     x = String.to_integer(x)
     y = String.to_integer(y)
-    IO.puts("(#{x},#{y})")
-    {:noreply, socket}
+    {:noreply, assign(socket, selected_cell: {x, y})}
   end
+
+  # def handle_info({:select_cell, {x, y}}, socket) do
+  #   {:noreply, assign(socket, selected_cell: {x, y})}
+  # end
 end

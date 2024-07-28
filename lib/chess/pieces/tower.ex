@@ -2,23 +2,34 @@ defmodule Chess.Pieces.Tower do
   @moduledoc """
   Represents a Tower on the board.
   """
+  @type name :: String.t()
   @type color :: :white | :black
-  @type location :: {integer, integer}
+  @type location :: {integer, integer} | nil
   @type t :: %__MODULE__{
+          name: name(),
           color: color(),
           location: location()
         }
 
   @enforce_keys [:color]
-  defstruct color: nil, location: {0, 0}
+  defstruct color: nil, location: nil, name: ""
 
   @valid_colors [:white, :black]
 
   @spec new(color()) :: t()
   def new(color) when color in @valid_colors do
-    %__MODULE__{color: color}
-    |> default_location
+    %__MODULE__{color: color, name: shape(color)}
   end
+
+  def shape(:white) do
+    "♖"
+  end
+
+  def shape(:black) do
+    "♜"
+  end
+
+  # ♔ ♕ ♖ ♗ ♘ ♙ ♚ ♛ ♜ ♝ ♞ ♟
 
   #   0   1   2   3   4   5   6   7
   # 7[📍][  ][  ][  ][  ][  ][  ][📍]7
@@ -30,16 +41,4 @@ defmodule Chess.Pieces.Tower do
   # 1[  ][  ][  ][  ][  ][  ][  ][  ]1
   # 0[📍][  ][  ][  ][  ][  ][  ][📍]0
   #   0   1   2   3   4   5   6   7
-  @spec default_location(t()) :: t()
-  defp default_location(tower) do
-    %{tower | location: default_location_for(tower.color)}
-  end
-
-  defp default_location_for(:black) do
-    {0, 0}
-  end
-
-  defp default_location_for(:white) do
-    {0, 7}
-  end
 end

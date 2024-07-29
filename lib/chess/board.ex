@@ -3,16 +3,13 @@ defmodule Chess.Board do
 
   defstruct cells: %{},
             pieces: [],
-            turn: nil,
-            movement_number: 0,
-            movement_history: [],
             castling: [],
             box_on_theway: []
 
   @type cell :: {
           x :: integer(),
           y :: integer(),
-          piece :: Tower.t() | nil
+          piece :: Tower.t() | Horse.t() | Pawn.t() | Queen.t() | King.t() | Bishop.t() | nil
         }
 
   @type cells :: [cell()]
@@ -22,20 +19,15 @@ defmodule Chess.Board do
   @type t :: %__MODULE__{
           cells: cells(),
           pieces: list(),
-          turn: :white | :black,
-          movement_number: integer(),
-          movement_history: list(),
           castling: list(),
           box_on_theway: list()
         }
 
+  @board_range 0..7
   def new() do
     %__MODULE__{
       cells: [],
-      turn: :white,
       pieces: [],
-      movement_number: 0,
-      movement_history: [],
       castling: [],
       box_on_theway: []
     }
@@ -124,7 +116,6 @@ defmodule Chess.Board do
 
   defp put_piece(board, {row, col}, piece) do
     updated_piece = %{piece | location: {row, col}}
-    IO.inspect(piece)
 
     updated_cells =
       Enum.map(board.cells, fn
@@ -133,5 +124,37 @@ defmodule Chess.Board do
       end)
 
     %{board | cells: updated_cells, pieces: [updated_piece | board.pieces]}
+  end
+
+  @spec get_piece(t(), cell()) :: piece() | nil
+  def get_piece(board, cell) do
+    board.cells
+    |> Enum.find(fn c -> c == cell end)
+    |> elem(2)
+  end
+
+  @doc """
+  Checks if the given cell coordinates are within the valid range of the chess board.
+
+  The valid range for the chess board is 0 to 7 for both the row and column coordinates.
+
+  ## Examples
+
+      iex> cell_exists?({0, 0})
+      true
+      iex> cell_exists?({8, 0})
+      false
+
+  ## Parameters
+
+  - `{x, y}`: A tuple representing the row and column coordinates of the cell to check.
+
+  ## Returns
+
+  - `true` if the cell coordinates are within the valid range, `false` otherwise.
+  """
+  @spec cell_exists?(location()) :: boolean()
+  def cell_exists?({x, y}) do
+    Enum.member?(@board_range, x) && Enum.member?(@board_range, y)
   end
 end

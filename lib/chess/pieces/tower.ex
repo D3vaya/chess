@@ -2,17 +2,19 @@ defmodule Chess.Pieces.Tower do
   @moduledoc """
   Represents a Tower on the board.
   """
+  @type name :: Atom.t()
   @type shape :: String.t()
   @type color :: :white | :black
   @type location :: {integer, integer} | nil
   @type t :: %__MODULE__{
+          name: name(),
           shape: shape(),
           color: color(),
           location: location()
         }
 
   @enforce_keys [:color]
-  defstruct color: nil, location: nil, shape: ""
+  defstruct name: :tower, color: nil, location: nil, shape: ""
 
   @valid_colors [:white, :black]
 
@@ -29,16 +31,14 @@ defmodule Chess.Pieces.Tower do
     "♜"
   end
 
-  # ♔ ♕ ♖ ♗ ♘ ♙ ♚ ♛ ♜ ♝ ♞ ♟
-
-  #   0   1   2   3   4   5   6   7
-  # 7[📍][  ][  ][  ][  ][  ][  ][📍]7
-  # 6[  ][  ][  ][  ][  ][  ][  ][  ]6
-  # 5[  ][  ][  ][  ][  ][  ][  ][  ]5
-  # 4[  ][  ][  ][  ][  ][  ][  ][  ]4
-  # 3[  ][  ][  ][  ][  ][  ][  ][  ]3
-  # 2[  ][  ][  ][  ][  ][  ][  ][  ]2
-  # 1[  ][  ][  ][  ][  ][  ][  ][  ]1
-  # 0[📍][  ][  ][  ][  ][  ][  ][📍]0
-  #   0   1   2   3   4   5   6   7
+  #   0  1  2  3  4  5  6  7
+  # 7[♜][ ][ ][ ][ ][ ][ ][♜]7
+  # 6[ ][ ][ ][ ][ ][ ][ ][ ]6
+  # 5[ ][ ][ ][ ][ ][ ][ ][ ]5
+  # 4[ ][ ][ ][ ][ ][ ][ ][ ]4
+  # 3[ ][ ][ ][ ][ ][ ][ ][ ]3
+  # 2[ ][ ][ ][ ][ ][ ][ ][ ]2
+  # 1[ ][ ][ ][ ][ ][ ][ ][ ]1
+  # 0[♖][ ][ ][ ][ ][ ][ ][♖]0
+  #   0  1  2  3  4  5  6  7
 end

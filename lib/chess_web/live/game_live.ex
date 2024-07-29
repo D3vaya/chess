@@ -4,13 +4,15 @@ defmodule ChessWeb.GameLive do
   alias Chess.{Game, Board}
 
   def mount(_params, _session, socket) do
-    {:ok,
-     assign(socket,
-       game: Game.new(),
-       selected_cell: nil,
-       possible_movements: [],
-       show_popup: false
-     )}
+    socket =
+      assign(socket,
+        game: Game.new(),
+        selected_cell: nil,
+        possible_movements: [],
+        show_popup: false
+      )
+
+    {:ok, socket}
   end
 
   def render(assigns) do
@@ -22,7 +24,7 @@ defmodule ChessWeb.GameLive do
 
         <div class="flex w-full bg-gray-200">
           <pre class="p-4 text-black text-lg" style="font-family: monospace">
-            <%= inspect(@game, pretty: true) %>
+            <%= inspect(@game.movement_history, pretty: true) %>
           </pre>
         </div>
       </div>
@@ -85,16 +87,14 @@ defmodule ChessWeb.GameLive do
       <div
         class={"w-10 h-10 flex items-center justify-center cursor-pointer
         #{if rem(x + y, 2) == 0, do: "bg-white text-black", else: "bg-black text-white"}
-        #{if @selected_cell == {x, y, piece}, do: "bg-green-400", else: ""}
-        #{if {x, y} in @possible_movements, do: "bg-green-300 shadow-2xl border border-black animate-pulse", else: ""}
+        #{if @selected_cell == {x, y, piece} and piece != nil, do: "bg-green-300", else: ""}
+        #{if {x, y} in @possible_movements, do: "bg-green-300 shadow-2xl  animate-pulse", else: ""}
         hover:bg-green-200 transition-opacity"}
         phx-click="select_cell"
         phx-value-x={x}
         phx-value-y={y}
         phx-value-piece-type={if piece, do: Atom.to_string(piece.__struct__), else: nil}
         phx-value-piece-color={if piece, do: piece.color, else: nil}
-        phx-value-piece-location-x={if piece, do: elem(piece.location, 0), else: nil}
-        phx-value-piece-location-y={if piece, do: elem(piece.location, 1), else: nil}
         phx-value-piece-shape={if piece, do: piece.shape, else: nil}
       >
         <span class="text-2xl font-bold"><%= piece_name %></span>
@@ -110,22 +110,20 @@ defmodule ChessWeb.GameLive do
           "y" => y,
           "piece-type" => piece_type,
           "piece-color" => piece_color,
-          "piece-location-x" => piece_location_x,
-          "piece-location-y" => piece_location_y,
           "piece-shape" => piece_shape
         },
-        socket
+        %{assigns: %{selected_cell: nil}} = socket
       ) do
     x = String.to_integer(x)
     y = String.to_integer(y)
 
     piece =
-      if piece_type && piece_color && piece_location_x && piece_location_y && piece_shape do
+      if piece_type && piece_color && piece_shape do
         struct(
           String.to_existing_atom(piece_type),
           %{
             color: String.to_atom(piece_color),
-            location: {String.to_integer(piece_location_x), String.to_integer(piece_location_y)},
+            location: {x, y},
             shape: piece_shape
           }
         )
@@ -145,10 +143,34 @@ defmodule ChessWeb.GameLive do
      )}
   end
 
+  def handle_event(
+        "select_cell",
+        %{
+          "x" => x,
+          "y" => y
+        },
+        %{assigns: %{selected_cell: cell, possible_movements: movements}} =
+          socket
+      ) do
+    x = String.to_integer(x)
+    y = String.to_integer(y)
+
+    IO.inspect(movements, label: "movements")
+    IO.inspect({x, y}, label: "selected")
+    IO.inspect({x, y} in movements, label: "EVBALUATE")
+
+    if {x, y} in movements do
+      game_updated = Game.move_piece(socket.assigns.game, cell, {x, y})
+      {:noreply, assign(socket, game: game_updated, selected_cell: nil, possible_movements: [])}
+    else
+      {:noreply, assign(socket, selected_cell: cell, possible_movements: movements)}
+    end
+  end
+
   def handle_event("select_cell", %{"x" => x, "y" => y}, socket) do
     x = String.to_integer(x)
     y = String.to_integer(y)
-    {:noreply, assign(socket, selected_cell: {x, y, nil})}
+    {:noreply, assign(socket, selected_cell: {x, y, nil}, possible_movements: [])}
   end
 
   def handle_event("close_popup", _unsigned_params, socket) do

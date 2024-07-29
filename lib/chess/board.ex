@@ -6,15 +6,15 @@ defmodule Chess.Board do
             castling: [],
             box_on_theway: []
 
+  @type cells :: [cell()]
+  @type piece :: Tower.t() | Horse.t() | Pawn.t() | Queen.t() | King.t() | Bishop.t() | nil
+  @type location :: {integer(), integer()}
+
   @type cell :: {
           x :: integer(),
           y :: integer(),
-          piece :: Tower.t() | Horse.t() | Pawn.t() | Queen.t() | King.t() | Bishop.t() | nil
+          piece :: piece()
         }
-
-  @type cells :: [cell()]
-  @type piece :: Tower.t()
-  @type location :: {integer(), integer()}
 
   @type t :: %__MODULE__{
           cells: cells(),
@@ -35,7 +35,6 @@ defmodule Chess.Board do
     |> place_pieces
   end
 
-  @spec put_piece(t(), location(), piece()) :: t()
   defp create_cells(board) do
     cells = for row <- 0..7, column <- 0..7, do: {row, column, nil}
     %{board | cells: cells}
@@ -119,7 +118,8 @@ defmodule Chess.Board do
     |> put_piece({5, 2}, Pawn.new(:black))
   end
 
-  defp put_piece(board, {row, col}, piece) do
+  @spec put_piece(t(), location(), piece()) :: t()
+  def put_piece(board, {row, col}, piece) do
     updated_piece = %{piece | location: {row, col}}
 
     updated_cells =
@@ -131,8 +131,19 @@ defmodule Chess.Board do
     %{board | cells: updated_cells, pieces: [updated_piece | board.pieces]}
   end
 
-  @spec get_piece(t(), cell()) :: piece() | nil
-  def get_piece(board, cell) do
+  @spec clean_cell(t(), location()) :: t()
+  def clean_cell(board, {x, y}) do
+    updated_cells =
+      Enum.map(board.cells, fn
+        {^x, ^y, _} -> {x, y, nil}
+        cell -> cell
+      end)
+
+    %{board | cells: updated_cells}
+  end
+
+  @spec get_piece_struct(t(), cell()) :: piece() | nil
+  def get_piece_struct(board, cell) do
     board.cells
     |> Enum.find(fn c -> c == cell end)
     |> elem(2)

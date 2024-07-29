@@ -68,6 +68,8 @@ defmodule Chess.Board do
     |> put_piece({0, 6}, Horse.new(:black))
     |> put_piece({7, 1}, Horse.new(:white))
     |> put_piece({7, 6}, Horse.new(:white))
+    # test horse
+    |> put_piece({3, 3}, Horse.new(:white))
   end
 
   @spec place_bishops(t()) :: t()
@@ -112,6 +114,9 @@ defmodule Chess.Board do
     |> put_piece({6, 5}, Pawn.new(:white))
     |> put_piece({6, 6}, Pawn.new(:white))
     |> put_piece({6, 7}, Pawn.new(:white))
+    # test pawn
+    |> put_piece({5, 0}, Pawn.new(:white))
+    |> put_piece({5, 2}, Pawn.new(:black))
   end
 
   defp put_piece(board, {row, col}, piece) do
@@ -156,5 +161,13 @@ defmodule Chess.Board do
   @spec cell_exists?(location()) :: boolean()
   def cell_exists?({x, y}) do
     Enum.member?(@board_range, x) && Enum.member?(@board_range, y)
+  end
+
+  @spec the_cell_is_occupied?(t(), list(location()), atom()) :: list(cell())
+  def the_cell_is_occupied?(board, movements, color) do
+    board.cells
+    |> Enum.filter(fn {x, y, piece} ->
+      Enum.member?(movements, {x, y}) and (piece == nil or piece.color != color)
+    end)
   end
 end

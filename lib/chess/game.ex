@@ -22,13 +22,11 @@ defmodule Chess.Game do
 
   @spec calculate_movement(t(), Board.cell()) :: list(Board.location())
   def calculate_movement(game, cell) do
-    piece = Board.get_piece(game.board, cell)
+    selected_piece = Board.get_piece(game.board, cell)
 
     movements =
-      case piece do
-        %Chess.Pieces.Horse{} -> Horse.calculate_horse_movement(cell)
-        %Chess.Pieces.Pawn{} -> Pawn.calculate_pawn_movement(game, cell)
-        %Chess.Pieces.Tower{} -> []
+      case selected_piece do
+        %Chess.Pieces.Horse{} -> Horse.calculate_horse_movement(game.board, cell)
         nil -> []
       end
 

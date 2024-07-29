@@ -4,7 +4,13 @@ defmodule ChessWeb.GameLive do
   alias Chess.{Game, Board}
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, game: Game.new(), selected_cell: nil, possible_movements: [])}
+    {:ok,
+     assign(socket,
+       game: Game.new(),
+       selected_cell: nil,
+       possible_movements: [],
+       show_popup: false
+     )}
   end
 
   def render(assigns) do
@@ -33,9 +39,37 @@ defmodule ChessWeb.GameLive do
 
   defp render_board(assigns) do
     ~H"""
-    <div class="w-80 h-80 grid grid-cols-8 border border-gray-800">
+    <div class="w-80 relative h-80 grid grid-cols-8 border border-gray-800">
       <%= render_cells(assigns) %>
+      <%= render_popup(assigns) %>
     </div>
+    """
+  end
+
+  defp render_popup(assigns) do
+    ~H"""
+    <%= if @show_popup and @selected_cell do %>
+      <div class="absolute right-[-250px]">
+        <div class="bg-white border-2 border-black p-4 rounded-lg text-black">
+          <h2 class="text-xl font-bold mb-2">Cell Information</h2>
+          <p>Position: (<%= elem(@selected_cell, 0) %>, <%= elem(@selected_cell, 1) %>)</p>
+          <%= if elem(@selected_cell, 2) do %>
+            <p>Piece: <%= elem(@selected_cell, 2).name %></p>
+            <p>Shape: <span class="text-2xl"><%= elem(@selected_cell, 2).shape %></span></p>
+            <p class="flex justify-start items-center">
+              Color:
+              <span class={"w-[20px] h-[20px] ml-2 #{if elem(@selected_cell, 2) && elem(@selected_cell, 2).color == :white, do: "bg-white border-black border-2", else: "bg-black"}"}>
+              </span>
+            </p>
+          <% else %>
+            <p>Empty cell</p>
+          <% end %>
+          <button phx-click="close_popup" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+            Close
+          </button>
+        </div>
+      </div>
+    <% end %>
     """
   end
 
@@ -101,7 +135,8 @@ defmodule ChessWeb.GameLive do
      assign(
        socket,
        selected_cell: {x, y, piece},
-       possible_movements: possible_movements
+       possible_movements: possible_movements,
+       show_popup: true
      )}
   end
 
@@ -109,6 +144,10 @@ defmodule ChessWeb.GameLive do
     x = String.to_integer(x)
     y = String.to_integer(y)
     {:noreply, assign(socket, selected_cell: {x, y, nil})}
+  end
+
+  def handle_event("close_popup", _unsigned_params, socket) do
+    {:noreply, assign(socket, show_popup: false)}
   end
 
   # def handle_info({:select_cell, {x, y}}, socket) do

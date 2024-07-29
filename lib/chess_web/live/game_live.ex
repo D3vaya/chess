@@ -15,13 +15,6 @@ defmodule ChessWeb.GameLive do
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col w-full bg-gray-200">
-      <h1 class="text-2xl text-black">Possible movements</h1>
-      <pre class="p-4 text-black text-xl" style="font-family: monospace">
-        <%= inspect(@possible_movements, pretty: true) %>
-      </pre>
-    </div>
-
     <div class="bg-white text-white rounded-lg p-4">
       <div phx-window-keydown="keystroke">
         <h1 class="text-2xl text-black">Chess</h1>
@@ -63,6 +56,18 @@ defmodule ChessWeb.GameLive do
             </p>
           <% else %>
             <p>Empty cell</p>
+          <% end %>
+          <%= if length(@possible_movements) > 0 do %>
+            <div
+              class="flex flex-col mt-4 justify-start text-black text-lg"
+              style="font-family: monospace"
+            >
+              <strong>Possible movements</strong>
+              <hr class="mb-4" />
+              <%= for item <- @possible_movements do %>
+                <div><%= inspect(item, pretty: true) %></div>
+              <% end %>
+            </div>
           <% end %>
           <button phx-click="close_popup" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
             Close

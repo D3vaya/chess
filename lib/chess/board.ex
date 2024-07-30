@@ -16,13 +16,13 @@ defmodule Chess.Board do
           pieces: list(),
           castling: list(),
           box_on_theway: list(),
-          position_king_in_check: location()
+          position_king_in_check: location() | nil
         }
   defstruct cells: %{},
             pieces: [],
             castling: [],
             box_on_theway: [],
-            position_king_in_check: {}
+            position_king_in_check: nil
 
   @board_range 0..7
   def new() do

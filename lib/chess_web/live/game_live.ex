@@ -22,11 +22,12 @@ defmodule ChessWeb.GameLive do
         <h1 class="text-2xl text-black">Chess</h1>
         <%= render_board(assigns) %>
 
-        <div class="flex w-full bg-gray-200">
+        <div class="justify-start w-full bg-gray-200">
           <pre class="p-4 text-black text-lg" style="font-family: monospace">
-            <%= inspect(@game.board.position_king_in_check, pretty: true) %>
-            <%= inspect(@possible_movements, pretty: true) %>
-
+            <span>turn: </span><%= inspect(@game.turn, pretty: true) %>
+            <span>position_king_in_check: </span><%= inspect(@game.board.position_king_in_check, pretty: true) %>
+            <span>possible_movements: </span><%= inspect(@possible_movements, pretty: true) %>
+            <span>selected_cell: </span><%= inspect(@selected_cell, pretty: true) %>
           </pre>
         </div>
       </div>
@@ -86,13 +87,13 @@ defmodule ChessWeb.GameLive do
     ~H"""
     <%= for {x, y, piece} <- @game.board.cells do %>
       <% piece_name = if is_nil(piece), do: "", else: piece.shape %>
+
       <div
         class={"w-10 h-10 flex items-center justify-center cursor-pointer
         #{if rem(x + y, 2) == 0, do: "bg-white text-black", else: "bg-black text-white"}
-        #{if @selected_cell == {x, y, piece} and piece != nil, do: "bg-green-300", else: ""}
-        #{if {x, y} in @possible_movements, do: "bg-green-300 shadow-2xl  animate-pulse", else: ""}
-        #{if @game.board.position_king_in_check == {x, y}, do: "bg-red-300 shadow-2xl  animate-pulse", else: ""}
-
+        #{if @selected_cell == {x, y, piece} and piece != nil, do: "!bg-lime-300", else: ""}
+        #{if {x, y} in @possible_movements and @game.board.position_king_in_check == nil , do: "!bg-green-300 shadow-2xl animate-pulse", else: ""}
+        #{if @game.board.position_king_in_check == {x, y}, do: "!bg-red-300 shadow-2xl  animate-pulse", else: ""}
         hover:bg-green-200 transition-opacity"}
         phx-click="select_cell"
         phx-value-x={x}
@@ -100,6 +101,7 @@ defmodule ChessWeb.GameLive do
         phx-value-piece-type={if piece, do: Atom.to_string(piece.__struct__), else: nil}
         phx-value-piece-color={if piece, do: piece.color, else: nil}
         phx-value-piece-shape={if piece, do: piece.shape, else: nil}
+        phx-value-piece-name={if piece, do: piece.name, else: nil}
       >
         <span class="text-2xl font-bold"><%= piece_name %></span>
       </div>
@@ -116,7 +118,8 @@ defmodule ChessWeb.GameLive do
           "piece-color" => piece_color,
           "piece-shape" => piece_shape
         },
-        %{assigns: %{selected_cell: nil}} = socket
+        %{assigns: %{selected_cell: nil, game: %{board: %{position_king_in_check: nil}}}} =
+          socket
       ) do
     x = String.to_integer(x)
     y = String.to_integer(y)
@@ -136,16 +139,46 @@ defmodule ChessWeb.GameLive do
         nil
       end
 
+    IO.inspect(piece, label: "PIEZA ACUAL")
     cell = {x, y, piece}
-    possible_movements = Board.calculate_movement(socket.assigns.game.board, cell)
 
-    {:noreply,
-     assign(
-       socket,
-       selected_cell: {x, y, piece},
-       possible_movements: possible_movements,
-       show_popup: true
-     )}
+    if piece != nil and piece.color == socket.assigns.game.turn do
+      possible_movements = Board.calculate_movement(socket.assigns.game.board, cell)
+
+      {:noreply,
+       assign(
+         socket,
+         selected_cell: {x, y, piece},
+         possible_movements: possible_movements,
+         show_popup: true
+       )}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  # evento para cuando el Rey esta en jaque
+  def handle_event(
+        "select_cell",
+        %{
+          "x" => x,
+          "y" => y,
+          "piece-type" => piece_type,
+          "piece-color" => piece_color,
+          "piece-shape" => piece_shape,
+          "piece-name" => piece_name
+        },
+        %{assigns: %{selected_cell: nil, game: %{board: %{position_king_in_check: king}}}} =
+          socket
+      ) do
+    IO.inspect(king, label: "KING")
+    piece = String.to_atom(piece_name)
+
+    if piece == :king do
+      IO.inspect(piece_name, label: "KING")
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event(

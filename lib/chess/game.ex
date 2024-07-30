@@ -1,5 +1,4 @@
 defmodule Chess.Game do
-  alias Chess.Pieces.Horse
   alias Chess.{Board}
 
   @type t :: %__MODULE__{
@@ -8,7 +7,10 @@ defmodule Chess.Game do
           movement_number: integer(),
           movement_history: Board.cells()
         }
-  defstruct board: %{}, turn: nil, movement_number: 0, movement_history: []
+  defstruct board: %{},
+            turn: nil,
+            movement_number: 0,
+            movement_history: []
 
   def new do
     %__MODULE__{
@@ -17,22 +19,6 @@ defmodule Chess.Game do
       movement_number: 0,
       movement_history: []
     }
-  end
-
-  @spec calculate_movement(t(), Board.cell()) :: list(Board.location())
-  def calculate_movement(game, cell) do
-    selected_piece = Board.get_piece_struct(game.board, cell)
-
-    movements =
-      case selected_piece do
-        %Chess.Pieces.Horse{} -> Horse.calculate_horse_movement(game.board, cell)
-        nil -> []
-      end
-
-    # IO.inspect(game.turn, label: "GAME")
-    # IO.inspect(cell, label: "CELL")
-
-    movements
   end
 
   @doc """
@@ -77,6 +63,7 @@ defmodule Chess.Game do
       game.board
       |> Board.clean_cell({x, y})
       |> Board.put_piece({to_x, to_y}, piece)
+      |> Board.check_for_checkmate({to_x, to_y})
 
     updated_game =
       game
@@ -114,7 +101,7 @@ defmodule Chess.Game do
   Returns the updated movement number.
   """
 
-  @spec add_movement_number(t()) :: integer()
+  @spec add_movement_number(t()) :: t()
   def add_movement_number(game) do
     %{game | movement_number: game.movement_number + 1}
   end

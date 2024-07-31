@@ -223,6 +223,12 @@ defmodule Chess.Board do
     end
   end
 
+  @spec get_piece_from_board(t(), location()) :: cell() | nil
+  def get_piece_from_board(board, {x, y}) do
+    board.cells
+    |> Enum.find(fn {cell_x, cell_y, _piece} -> {cell_x, cell_y} == {x, y} end)
+  end
+
   @doc """
   Checks if the given cell coordinates are within the valid range of the chess board.
 

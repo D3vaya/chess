@@ -12,6 +12,7 @@ defmodule ChessWeb.GameLive do
       assign(socket,
         game: Game.new(),
         selected_cell: nil,
+        selected_piece: nil,
         possible_movements: [],
         show_popup: false
       )
@@ -32,6 +33,7 @@ defmodule ChessWeb.GameLive do
             <span>position_king_in_check: </span><%= inspect(@game.board.position_king_in_check, pretty: true) %>
             <span>possible_movements: </span><%= inspect(@possible_movements, pretty: true) %>
             <span>selected_cell: </span><%= inspect(@selected_cell, pretty: true) %>
+            <span>selected_piece: </span><%= inspect(@selected_piece, pretty: true) %>
           </pre>
         </div>
       </div>
@@ -109,15 +111,13 @@ defmodule ChessWeb.GameLive do
           "y" => y,
           "piece-type" => piece_type,
           "piece-color" => piece_color,
-          "piece-shape" => piece_shape,
-          "piece-name" => piece_name
+          "piece-shape" => piece_shape
         },
         %{assigns: %{selected_cell: nil, game: %{board: %{position_king_in_check: nil}}}} =
           socket
       ) do
     x = String.to_integer(x)
     y = String.to_integer(y)
-    IO.inspect("SELECCION DE PIEZA Y MOVIMIENTOS POSIBLES")
 
     piece =
       if piece_type && piece_color && piece_shape do
@@ -139,6 +139,7 @@ defmodule ChessWeb.GameLive do
     if piece != nil and piece.color == socket.assigns.game.turn do
       possible_movements = Board.calculate_movement(socket.assigns.game.board, cell)
       IO.inspect(possible_movements, label: "POSIBLES MOVIMIENTOS")
+      IO.inspect("=================================================")
 
       {:noreply,
        assign(
@@ -148,7 +149,8 @@ defmodule ChessWeb.GameLive do
          show_popup: true
        )}
     else
-      IO.inspect("LA PIEZA SELECCIONADA NO NO PERTENECE AL JUGADOR")
+      IO.inspect("LA PIEZA SELECCIONADA NO PERTENECE AL JUGADOR")
+      IO.inspect("=================================================")
       {:noreply, socket}
     end
   end
@@ -171,20 +173,13 @@ defmodule ChessWeb.GameLive do
 
     if piece == :king do
       IO.inspect({piece_name, king}, label: "REY EN JAQUE")
+      IO.inspect("=================================================")
       {:noreply, socket}
     else
       IO.inspect("REY EN JAQUE, DEBE MOVER EL REY")
+      IO.inspect("=================================================")
       {:noreply, socket}
     end
-  end
-
-  def handle_event(
-        "select_cell",
-        _unsigned_params,
-        %{assigns: %{game: %{board: %{turn: turn}}}} =
-          socket
-      ) do
-    IO.inspect("COLOR JUGAODR")
   end
 
   def handle_event(
@@ -201,6 +196,7 @@ defmodule ChessWeb.GameLive do
 
     if {x, y} in movements do
       IO.inspect({x, y}, label: "MOVIMIENTO DE PIEZA A")
+      IO.inspect("=================================================")
       game_updated = Game.move_piece(socket.assigns.game, cell, {x, y})
 
       {:noreply,
@@ -210,12 +206,18 @@ defmodule ChessWeb.GameLive do
          possible_movements: []
        )}
     else
-      IO.inspect("OTRA JUGADA")
-      cell = Board.get_piece_from_board(socket.assigns.game.board, {x, y})
-      IO.inspect(cell, label: "PIEZA SELECCIONADA: ")
-      possible_movements = Board.calculate_movement(socket.assigns.game.board, cell)
-      IO.inspect(possible_movements, label: "POSIBLES MOVIMIENTOS")
-      {:noreply, assign(socket, possible_movements: possible_movements, selected_cell: cell)}
+      {x, y, piece} = Board.get_piece_from_board(socket.assigns.game.board, {x, y})
+
+      if piece != nil and piece.color == socket.assigns.game.turn do
+        IO.inspect(cell, label: "PIEZA SELECCIONADA: ")
+        possible_movements = Board.calculate_movement(socket.assigns.game.board, {x, y, piece})
+        IO.inspect(possible_movements, label: "POSIBLES MOVIMIENTOS")
+        IO.inspect("=================================================")
+        {:noreply, assign(socket, possible_movements: possible_movements, selected_cell: cell)}
+      else
+        IO.inspect("CELDA VACIA O NO PERTENECE AL JUGADOR")
+        {:noreply, socket}
+      end
     end
   end
 
@@ -223,6 +225,7 @@ defmodule ChessWeb.GameLive do
     x = String.to_integer(x)
     y = String.to_integer(y)
     IO.inspect("no hace nada")
+    IO.inspect("=================================================")
 
     {:noreply,
      assign(socket, selected_cell: {x, y, nil}, possible_movements: [], show_popup: true)}

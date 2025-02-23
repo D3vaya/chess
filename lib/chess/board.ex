@@ -1,22 +1,13 @@
 defmodule Chess.Board do
+  alias Chess.Types
   alias Chess.Pieces.{Tower, Horse, Pawn, Queen, King, Bishop}
 
-  @type cells :: [cell()]
-  @type piece :: Tower.t() | Horse.t() | Pawn.t() | Queen.t() | King.t() | Bishop.t() | nil
-  @type location :: {integer(), integer()}
-
-  @type cell :: {
-          x :: integer(),
-          y :: integer(),
-          piece :: piece()
-        }
-
   @type t :: %__MODULE__{
-          cells: cells(),
+          cells: Types.cells(),
           pieces: list(),
           castling: list(),
           box_on_theway: list(),
-          position_king_in_check: location() | nil
+          position_king_in_check: Types.location() | nil
         }
   defstruct cells: %{},
             pieces: [],
@@ -41,6 +32,17 @@ defmodule Chess.Board do
     %{board | cells: cells}
   end
 
+  @doc """
+  Places all chess pieces in their initial positions on the board.
+  Pieces are placed in the following order: towers, horses, bishops, queens, kings, and pawns.
+
+  ## Parameters
+    - board: A chess board representation of type t()
+
+  ## Returns
+    - The board with all pieces placed in their initial positions
+
+  """
   @spec place_pieces(t()) :: t()
   def place_pieces(board) do
     board
@@ -109,7 +111,7 @@ defmodule Chess.Board do
     |> put_piece({1, 5}, Pawn.new(:black))
     |> put_piece({1, 6}, Pawn.new(:black))
     |> put_piece({1, 7}, Pawn.new(:black))
-    |> put_piece({6, 0}, Pawn.new(:white))
+    # |> put_piece({6, 0}, Pawn.new(:white))
     |> put_piece({6, 1}, Pawn.new(:white))
     |> put_piece({6, 2}, Pawn.new(:white))
     |> put_piece({6, 3}, Pawn.new(:white))
@@ -136,13 +138,14 @@ defmodule Chess.Board do
 
   A list of locations representing the possible movements for the piece.
   """
-  @spec calculate_movement(t(), cell()) :: list(location())
+  @spec calculate_movement(t(), Types.cell()) :: Types.locations()
   def calculate_movement(board, cell) do
     selected_piece = get_piece_struct(board, cell)
 
     movements =
       case selected_piece do
         %Chess.Pieces.Horse{} -> Horse.calculate_horse_movement(board, cell)
+        %Chess.Pieces.Tower{} -> Tower.calculate_tower_movement(board, cell)
         nil -> []
       end
 
@@ -165,7 +168,7 @@ defmodule Chess.Board do
 
   The updated chess board with the piece placed at the specified location.
   """
-  @spec put_piece(t(), location(), piece()) :: t()
+  @spec put_piece(t(), Types.location(), Types.piece()) :: t()
   def put_piece(board, {row, col}, piece) do
     updated_piece = %{piece | location: {row, col}}
 
@@ -190,7 +193,7 @@ defmodule Chess.Board do
 
   The updated chess board with the piece removed from the specified cell.
   """
-  @spec clean_cell(t(), location()) :: t()
+  @spec clean_cell(t(), Types.location()) :: t()
   def clean_cell(board, {x, y}) do
     updated_cells =
       Enum.map(board.cells, fn
@@ -213,7 +216,7 @@ defmodule Chess.Board do
 
   The piece struct for the given cell, or `nil` if the cell is empty.
   """
-  @spec get_piece_struct(t(), cell()) :: piece() | nil
+  @spec get_piece_struct(t(), Types.cell()) :: Types.piece() | nil
   def get_piece_struct(board, cell) do
     board.cells
     |> Enum.find(fn c -> c == cell end)
@@ -223,16 +226,39 @@ defmodule Chess.Board do
     end
   end
 
-  @spec get_piece_from_board(t(), location()) :: cell() | nil
-  def get_piece_from_board(board, {x, y}) do
+  @doc """
+  Retrieves a piece from the board at the specified coordinates.
+
+  ## Parameters
+    - `board`: The current state of the chess board.
+    - `{x, y}`: A tuple representing the row and column coordinates to search.
+
+  ## Returns
+    Returns a tuple `{x, y, piece}` if a piece is found at the specified coordinates,
+    or `nil` if no piece is found.
+
+  ## Examples
+      iex> board = %Board{cells: [{0, 0, %Piece{}}]}
+      iex> get_piece_from_board(board, {0, 0})
+      {0, 0, %Piece{}}
+
+      iex> get_piece_from_board(board, {1, 1})
+      nil
+  """
+  @spec get_piece_from_board(t(), Types.location()) :: Types.cell() | nil
+  def get_piece_from_board(board, position = {x, y}) when is_integer(x) and is_integer(y) do
     board.cells
-    |> Enum.find(fn {cell_x, cell_y, _piece} -> {cell_x, cell_y} == {x, y} end)
+    |> Enum.find(&match_position?(&1, position))
   end
+
+  # Private helper function to improve readability
+  @spec match_position?(Types.cell(), Types.location()) :: boolean()
+  defp match_position?({cell_x, cell_y, _piece}, {x, y}), do: {cell_x, cell_y} == {x, y}
 
   @doc """
   Checks if the given cell coordinates are within the valid range of the chess board.
-
   The valid range for the chess board is 0 to 7 for both the row and column coordinates.
+
 
   ## Examples
 
@@ -249,7 +275,7 @@ defmodule Chess.Board do
 
   - `true` if the cell coordinates are within the valid range, `false` otherwise.
   """
-  @spec cell_exists?(location()) :: boolean()
+  @spec cell_exists?(Types.location()) :: boolean()
   def cell_exists?({x, y}) do
     Enum.member?(@board_range, x) && Enum.member?(@board_range, y)
   end
@@ -267,27 +293,12 @@ defmodule Chess.Board do
 
   A list of the cell coordinates that are occupied by a piece of the opposite color.
   """
-  @spec the_cell_is_occupied?(t(), list(location()), atom()) :: list(cell())
+  @spec the_cell_is_occupied?(t(), Types.locations(), atom()) :: Types.cells()
   def the_cell_is_occupied?(board, movements, color) do
     board.cells
     |> Enum.filter(fn {x, y, piece} ->
       Enum.member?(movements, {x, y}) and (piece == nil or piece.color != color)
     end)
-  end
-
-  @spec check_for_checkmate(t(), location()) :: t()
-  def check_for_checkmate(board, {x, y}) do
-    {_x, _y, piece} =
-      board.cells
-      |> Enum.find(fn {cell_x, cell_y, _piec} -> {cell_x, cell_y} == {x, y} end)
-
-    updated_piece = %{piece | location: {x, y}}
-
-    position_king_chake =
-      calculate_movement(board, {x, y, updated_piece})
-      |> find_checked_king_position(board, updated_piece.color)
-
-    %{board | position_king_in_check: position_king_chake}
   end
 
   @doc """
@@ -303,7 +314,7 @@ defmodule Chess.Board do
 
     La posición del rey en jaque como una tupla {x, y}, o nil si no hay rey en jaque.
   """
-  @spec find_checked_king_position(list(location()), t(), atom()) :: location() | nil
+  @spec find_checked_king_position(Types.locations(), t(), atom()) :: Types.location() | nil
   def find_checked_king_position(movements, board, color) do
     case Enum.find(board.cells, fn {x, y, piece} ->
            {x, y} in movements and piece != nil and piece.color != color and piece.name == :king
@@ -311,5 +322,42 @@ defmodule Chess.Board do
       {x, y, _piece} -> {x, y}
       nil -> nil
     end
+  end
+
+  @spec calculate_range_of_motion(Types.locations(), t(), atom()) :: Types.locations()
+  def calculate_range_of_motion(movements, board, color) do
+    IO.inspect(movements, label: "Movimientos")
+
+    result =
+      board
+      |> mark_movement_axes(movements, color)
+      |> evaluate_collisions(board, color)
+
+    result
+  end
+
+  @spec mark_movement_axes(t(), Types.locations(), atom()) :: Types.locations()
+  defp mark_movement_axes(board, movements, color) do
+    board.cells
+    |> Enum.filter(fn {cell_x, cell_y, _piece} -> {cell_x, cell_y} in movements end)
+    |> Enum.filter(fn {_x, _y, piece} -> piece == nil or piece.color != color end)
+    |> Enum.map(fn {x, y, _piece} -> {x, y} end)
+  end
+
+  def evaluate_collisions(movements, board, color) do
+    IO.inspect(movements, label: "Evaluando colisiones")
+
+    black_pieces =
+      board.cells
+      |> Enum.filter(fn {x, y, piece} ->
+        {x, y} in movements and
+          piece != nil and piece.color != color
+      end)
+      |> Enum.reverse()
+      |> Enum.at(0)
+
+    IO.inspect(black_pieces, label: "Piezas")
+
+    movements
   end
 end

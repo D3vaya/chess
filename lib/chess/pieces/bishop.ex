@@ -1,14 +1,15 @@
 defmodule Chess.Pieces.Bishop do
+  alias Chess.Types
+
   @moduledoc """
   Represents a Bishop on the board.
   """
-  @type name :: Atom.t()
-  @type shape :: String.t()
-  @type color :: :white | :black
-  @type location :: {integer, integer}
+  @type name :: atom()
+  @type color :: Types.color()
+  @type location :: Types.location()
   @type t :: %__MODULE__{
           name: name(),
-          shape: shape(),
+          shape: Types.shape(),
           color: color(),
           location: location()
         }

@@ -1,14 +1,18 @@
 defmodule ChessWeb.GameLive do
   use ChessWeb, :live_view
-  # <alias Phoenix.Socket.Broadcast>
   alias Chess.{Game, Board}
   import ChessWeb.CellComponent
 
   def mount(_params, session, socket) do
-    IO.inspect(session, label: "session")
-    if connected?(socket), do: ChessWeb.Endpoint.subscribe("chess:lobby")
+    IO.puts("\n====== INICIANDO JUEGO DE AJEDREZ ======")
+    IO.inspect(session, label: "Datos de sesión")
 
-    socket =
+    if connected?(socket) do
+      IO.puts("✅ Conectado al socket")
+      ChessWeb.Endpoint.subscribe("chess:lobby")
+    end
+
+    initial_socket =
       assign(socket,
         game: Game.new(),
         selected_cell: nil,
@@ -17,7 +21,9 @@ defmodule ChessWeb.GameLive do
         show_popup: false
       )
 
-    {:ok, socket}
+    IO.puts("Estado inicial del juego configurado")
+    IO.puts("Turno inicial: #{initial_socket.assigns.game.turn}")
+    {:ok, initial_socket}
   end
 
   def render(assigns) do
@@ -104,6 +110,7 @@ defmodule ChessWeb.GameLive do
     """
   end
 
+  # Primera selección de pieza (cuando no hay pieza seleccionada y no hay jaque)
   def handle_event(
         "select_cell",
         %{
@@ -113,49 +120,66 @@ defmodule ChessWeb.GameLive do
           "piece-color" => piece_color,
           "piece-shape" => piece_shape
         },
-        %{assigns: %{selected_cell: nil, game: %{board: %{position_king_in_check: nil}}}} =
-          socket
+        %{assigns: %{selected_cell: nil, game: %{board: %{position_king_in_check: nil}}}} = socket
       ) do
     x = String.to_integer(x)
     y = String.to_integer(y)
 
+    IO.puts("\n====== NUEVA SELECCIÓN DE PIEZA ======")
+    IO.puts("Posición seleccionada: (#{x}, #{y})")
+
     piece =
       if piece_type && piece_color && piece_shape do
-        struct(
-          String.to_existing_atom(piece_type),
-          %{
-            color: String.to_atom(piece_color),
-            location: {x, y},
-            shape: piece_shape
-          }
-        )
+        piece =
+          struct(
+            String.to_existing_atom(piece_type),
+            %{
+              color: String.to_atom(piece_color),
+              location: {x, y},
+              shape: piece_shape
+            }
+          )
+
+        IO.puts("📝 Pieza encontrada:")
+        IO.puts("  - Tipo: #{piece_type}")
+        IO.puts("  - Color: #{piece_color}")
+        IO.puts("  - Forma: #{piece_shape}")
+        piece
       else
+        IO.puts("⚪ Celda vacía seleccionada")
         nil
       end
 
-    IO.inspect(piece, label: "PIEZA SELECCIONADA: ")
-    seleceted_cell = {x, y, piece}
+    selected_cell = {x, y, piece}
 
-    if piece != nil and piece.color == socket.assigns.game.turn do
-      possible_movements = Board.calculate_movement(socket.assigns.game.board, seleceted_cell)
-      IO.inspect(possible_movements, label: "POSIBLES MOVIMIENTOS")
-      IO.inspect("=================================================")
+    cond do
+      piece != nil and piece.color == socket.assigns.game.turn ->
+        IO.puts("\n➡️ CALCULANDO MOVIMIENTOS POSIBLES")
+        IO.puts("Turno actual: #{socket.assigns.game.turn}")
+        possible_movements = Board.calculate_movement(socket.assigns.game.board, selected_cell)
+        IO.puts("Movimientos disponibles: #{inspect(possible_movements)}")
 
-      {:noreply,
-       assign(
-         socket,
-         selected_cell: {x, y, piece},
-         possible_movements: possible_movements,
-         show_popup: true
-       )}
-    else
-      IO.inspect("LA PIEZA SELECCIONADA NO PERTENECE AL JUGADOR")
-      IO.inspect("=================================================")
-      {:noreply, socket}
+        {:noreply,
+         assign(
+           socket,
+           selected_cell: {x, y, piece},
+           possible_movements: possible_movements,
+           show_popup: true
+         )}
+
+      piece != nil ->
+        IO.puts("\n⚠️ MOVIMIENTO INVÁLIDO")
+        IO.puts("No es el turno del jugador #{piece.color}")
+        {:noreply, socket}
+
+      true ->
+        IO.puts("\n⚠️ SELECCIÓN INVÁLIDA")
+        IO.puts("No hay pieza para mover")
+        {:noreply, socket}
     end
   end
 
-  # evento para cuando el Rey esta en jaque
+  # Manejo de situación de jaque
   def handle_event(
         "select_cell",
         %{
@@ -171,33 +195,38 @@ defmodule ChessWeb.GameLive do
       ) do
     piece = String.to_atom(piece_name)
 
+    IO.puts("\n====== SITUACIÓN DE JAQUE ======")
+    IO.puts("⚠️ Rey en jaque: #{inspect(king)}")
+    IO.puts("Pieza seleccionada: #{piece_name}")
+
     if piece == :king do
-      IO.inspect({piece_name, king}, label: "REY EN JAQUE")
-      IO.inspect("=================================================")
+      IO.puts("✅ Selección válida: El rey debe moverse")
       {:noreply, socket}
     else
-      IO.inspect("REY EN JAQUE, DEBE MOVER EL REY")
-      IO.inspect("=================================================")
+      IO.puts("❌ Selección inválida: Solo se puede mover el rey en jaque")
       {:noreply, socket}
     end
   end
 
+  # Manejo de movimiento de pieza
   def handle_event(
         "select_cell",
-        %{
-          "x" => x,
-          "y" => y
-        },
-        %{assigns: %{selected_cell: cell, possible_movements: movements}} =
-          socket
+        %{"x" => x, "y" => y},
+        %{assigns: %{selected_cell: cell, possible_movements: movements}} = socket
       ) do
     x = String.to_integer(x)
     y = String.to_integer(y)
 
+    IO.puts("\n====== INTENTO DE MOVIMIENTO ======")
+    IO.puts("Desde: #{inspect(cell)}")
+    IO.puts("Hacia: (#{x}, #{y})")
+
     if {x, y} in movements do
-      IO.inspect({x, y}, label: "MOVIMIENTO DE PIEZA A")
-      IO.inspect("=================================================")
+      IO.puts("\n✅ MOVIMIENTO VÁLIDO")
+      IO.puts("Ejecutando movimiento...")
       game_updated = Game.move_piece(socket.assigns.game, cell, {x, y})
+      IO.puts("Movimiento completado")
+      IO.puts("Nuevo turno: #{game_updated.turn}")
 
       {:noreply,
        assign(socket,
@@ -209,33 +238,35 @@ defmodule ChessWeb.GameLive do
       {x, y, piece} = Board.get_piece_from_board(socket.assigns.game.board, {x, y})
 
       if piece != nil and piece.color == socket.assigns.game.turn do
-        IO.inspect(cell, label: "PIEZA SELECCIONADA: ")
+        IO.puts("\n🔄 CAMBIO DE SELECCIÓN")
+        IO.puts("Nueva pieza seleccionada: #{inspect(piece)}")
         possible_movements = Board.calculate_movement(socket.assigns.game.board, {x, y, piece})
-        IO.inspect(possible_movements, label: "POSIBLES MOVIMIENTOS")
-        IO.inspect("=================================================")
+        IO.puts("Nuevos movimientos posibles: #{inspect(possible_movements)}")
+
         {:noreply, assign(socket, possible_movements: possible_movements, selected_cell: cell)}
       else
-        IO.inspect("CELDA VACIA O NO PERTENECE AL JUGADOR")
+        IO.puts("\n❌ MOVIMIENTO INVÁLIDO")
+        IO.puts("Celda seleccionada no es válida para el turno actual")
         {:noreply, socket}
       end
     end
   end
 
+  # Manejo de selección de celda vacía
   def handle_event("select_cell", %{"x" => x, "y" => y}, socket) do
     x = String.to_integer(x)
     y = String.to_integer(y)
-    IO.inspect("no hace nada")
-    IO.inspect("=================================================")
+
+    IO.puts("\n====== SELECCIÓN DE CELDA VACÍA ======")
+    IO.puts("Posición: (#{x}, #{y})")
+    IO.puts("No hay acción disponible")
 
     {:noreply,
      assign(socket, selected_cell: {x, y, nil}, possible_movements: [], show_popup: true)}
   end
 
   def handle_event("close_popup", _unsigned_params, socket) do
+    IO.puts("\n====== CERRANDO POPUP ======")
     {:noreply, assign(socket, show_popup: false)}
   end
-
-  # def handle_info({:select_cell, {x, y}}, socket) do
-  #   {:noreply, assign(socket, selected_cell: {x, y})}
-  # end
 end

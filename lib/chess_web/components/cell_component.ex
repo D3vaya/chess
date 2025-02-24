@@ -16,7 +16,7 @@ defmodule ChessWeb.CellComponent do
         if(rem(@x + @y, 2) == 0, do: "bg-white text-black", else: "bg-black text-white"),
         if(@selected_cell == {@x, @y, @piece} and @piece != nil, do: "!bg-lime-300", else: ""),
         if({@x, @y} in @possible_movements and @position_king_in_check == nil,
-          do: "!bg-green-300 shadow-2xl animate-pulse",
+          do: "!bg-green-300 border shadow-2xl animate-pulse",
           else: ""
         ),
         if(@position_king_in_check == {@x, @y}, do: "!bg-red-300 shadow-2xl animate-pulse", else: ""),

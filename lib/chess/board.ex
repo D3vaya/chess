@@ -61,6 +61,8 @@ defmodule Chess.Board do
     |> put_piece({0, 7}, Tower.new(:black))
     |> put_piece({7, 0}, Tower.new(:white))
     |> put_piece({7, 7}, Tower.new(:white))
+    # test tower
+    |> put_piece({3, 3}, Tower.new(:white))
   end
 
   @spec place_hourses(t()) :: t()
@@ -70,8 +72,9 @@ defmodule Chess.Board do
     |> put_piece({0, 6}, Horse.new(:black))
     |> put_piece({7, 1}, Horse.new(:white))
     |> put_piece({7, 6}, Horse.new(:white))
+
     # test horse
-    |> put_piece({3, 3}, Horse.new(:white))
+    # |> put_piece({3, 3}, Horse.new(:white))
   end
 
   @spec place_bishops(t()) :: t()
@@ -139,13 +142,13 @@ defmodule Chess.Board do
   A list of locations representing the possible movements for the piece.
   """
   @spec calculate_movement(t(), Types.cell()) :: Types.locations()
-  def calculate_movement(board, cell) do
-    selected_piece = get_piece_struct(board, cell)
+  def calculate_movement(board, selected_cell) do
+    selected_piece = get_piece_struct(board, selected_cell)
 
     movements =
       case selected_piece do
-        %Chess.Pieces.Horse{} -> Horse.calculate_horse_movement(board, cell)
-        %Chess.Pieces.Tower{} -> Tower.calculate_tower_movement(board, cell)
+        %Chess.Pieces.Horse{} -> Horse.calculate_horse_movement(board, selected_cell)
+        %Chess.Pieces.Tower{} -> Tower.calculate_tower_movement(board, selected_cell)
         nil -> []
       end
 

@@ -134,10 +134,10 @@ defmodule ChessWeb.GameLive do
       end
 
     IO.inspect(piece, label: "PIEZA SELECCIONADA: ")
-    cell = {x, y, piece}
+    seleceted_cell = {x, y, piece}
 
     if piece != nil and piece.color == socket.assigns.game.turn do
-      possible_movements = Board.calculate_movement(socket.assigns.game.board, cell)
+      possible_movements = Board.calculate_movement(socket.assigns.game.board, seleceted_cell)
       IO.inspect(possible_movements, label: "POSIBLES MOVIMIENTOS")
       IO.inspect("=================================================")
 

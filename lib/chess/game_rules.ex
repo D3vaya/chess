@@ -1,8 +1,5 @@
 defmodule Chess.GameRules do
-  alias Chess.Board
-
-  @type location :: Board.location()
-  @type piece :: Board.piece()
+  alias Chess.{Board, Types}
 
   @doc """
   Checks if a move results in a checkmate situation.
@@ -18,7 +15,7 @@ defmodule Chess.GameRules do
       iex> check_for_checkmate(board, {4, 4})
       %Board{position_king_in_check: {0, 0}}
   """
-  @spec check_for_checkmate(Board.t(), location()) :: Board.t()
+  @spec check_for_checkmate(Board.t(), Types.location()) :: Board.t()
   def check_for_checkmate(board, position = {x, y}) do
     case Board.get_piece_from_board(board, position) do
       {^x, ^y, piece} ->

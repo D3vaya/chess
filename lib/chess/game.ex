@@ -1,11 +1,11 @@
 defmodule Chess.Game do
-  alias Chess.{Board}
+  alias Chess.{Board, Types, GameRules}
 
   @type t :: %__MODULE__{
           board: Board.t(),
           turn: :white | :black,
           movement_number: integer(),
-          movement_history: Board.cells()
+          movement_history: Types.cells()
         }
   defstruct board: %{},
             turn: nil,
@@ -57,13 +57,13 @@ defmodule Chess.Game do
   Returns:
     the updated game state with the piece moved
   """
-  @spec move_piece(t(), Board.cell(), Board.location()) :: t()
+  @spec move_piece(t(), Types.cell(), Types.location()) :: t()
   def move_piece(game, {x, y, piece}, {to_x, to_y}) do
     updated_board =
       game.board
       |> Board.clean_cell({x, y})
       |> Board.put_piece({to_x, to_y}, piece)
-      |> Board.check_for_checkmate({to_x, to_y})
+      |> GameRules.check_for_checkmate({to_x, to_y})
 
     updated_game =
       game
@@ -88,7 +88,7 @@ defmodule Chess.Game do
   Returns:
     the updated list of movements with the new movement added
   """
-  @spec add_movement_to_the_history(t(), Board.cell()) :: t()
+  @spec add_movement_to_the_history(t(), Types.cell()) :: t()
   def add_movement_to_the_history(game, movement) do
     %{game | movement_history: [movement | game.movement_history]}
   end

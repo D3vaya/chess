@@ -1,6 +1,5 @@
 defmodule Chess.Pieces.Tower do
-  alias Chess.Board
-  alias Chess.Types
+  alias Chess.{Board, Types}
 
   @moduledoc """
   Represents a Tower on the board.
@@ -34,6 +33,8 @@ defmodule Chess.Pieces.Tower do
     board
     |> allowed_movements(selected_cell)
   end
+
+  # GameRules.check_for_checkmate()
 
   @spec allowed_movements(Board.t(), Types.cell()) :: Types.locations()
   def allowed_movements(board, {position_x, position_y, piece}) do

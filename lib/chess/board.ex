@@ -61,8 +61,9 @@ defmodule Chess.Board do
     |> put_piece({0, 7}, Tower.new(:black))
     |> put_piece({7, 0}, Tower.new(:white))
     |> put_piece({7, 7}, Tower.new(:white))
+
     # test tower
-    |> put_piece({3, 3}, Tower.new(:white))
+    # |> put_piece({4, 3}, Tower.new(:white))
   end
 
   @spec place_hourses(t()) :: t()
@@ -115,7 +116,7 @@ defmodule Chess.Board do
     |> put_piece({1, 6}, Pawn.new(:black))
     |> put_piece({1, 7}, Pawn.new(:black))
     # |> put_piece({6, 0}, Pawn.new(:white))
-    |> put_piece({6, 1}, Pawn.new(:white))
+    # |> put_piece({6, 1}, Pawn.new(:white))
     |> put_piece({6, 2}, Pawn.new(:white))
     |> put_piece({6, 3}, Pawn.new(:white))
     |> put_piece({6, 4}, Pawn.new(:white))
